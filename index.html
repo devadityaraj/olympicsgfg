@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Olympics Athlete Mental Health Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Authentication Section -->
+  <div id="auth-section">
+    <h1>Olympics Athlete Mental Health Tracker</h1>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="signup()">Signup</button>
+  </div>
+
+  <!-- Main App Content -->
+  <div id="app-content" style="display: none;">
+    <button onclick="logout()">Logout</button>
+    
+    <h1>Welcome to Athlete Wellness</h1>
+    
+    <!-- Mood Check-In Section -->
+    <section id="mood-checkin">
+      <h2>Mood Check-In</h2>
+      <select id="mood-selector">
+        <option value="">How are you feeling?</option>
+        <option value="happy">Happy</option>
+        <option value="neutral">Neutral</option>
+        <option value="stressed">Stressed</option>
+        <option value="anxious">Anxious</option>
+      </select>
+      <button onclick="submitMood()">Submit</button>
+    </section>
+
+    <!-- Breathing Exercises Section -->
+    <section id="breathing-exercises">
+      <h2>Breathing Exercises</h2>
+      <p>Follow the breathing rhythm</p>
+      <div id="breathe-visual"></div>
+    </section>
+
+    <!-- Anonymous Chat Section -->
+    <section id="anonymous-chat">
+      <h2>Anonymous Chat</h2>
+      <div id="chat-messages"></div>
+      <input type="text" id="chat-message-input" placeholder="Enter your message">
+      <button onclick="sendMessage()">Send</button>
+    </section>
+
+    <!-- Push Notifications Section -->
+    <section id="notifications">
+      <h2>Wellness Tips Notifications</h2>
+      <button onclick="requestNotificationPermission()">Enable Notifications</button>
+    </section>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js"></script>
+  
+  <script>
+    const firebaseConfig = {
+    apiKey: "AIzaSyAeKgUnIcBvYocwF4OS3eykVCwoJ3b2vvU",
+    authDomain: "olympics-gfg.firebaseapp.com",
+    databaseURL: "https://olympics-gfg-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "olympics-gfg",
+    storageBucket: "olympics-gfg.appspot.com",
+    messagingSenderId: "555355543715",
+    appId: "1:555355543715:web:914d61c7d6a3872a934716"
+  };
+  
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+  const messaging = firebase.messaging();
+  </script>
+
+  <script>
+    
+function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('app-content').style.display = 'block';
+      })
+      .catch(error => alert(error.message));
+  }
+  
+  function signup() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+  
+    auth.createUserWithEmailAndPassword(email, password)
+      .then(() => {
+        alert('Account created!');
+        login();
+      })
+      .catch(error => alert(error.message));
+  }
+
+  function logout() {
+    auth.signOut().then(() => {
+      document.getElementById('auth-section').style.display = 'block';
+      document.getElementById('app-content').style.display = 'none';
+    });
+  }
+
+  function submitMood() {
+    const mood = document.getElementById('mood-selector').value;
+    const userId = auth.currentUser.uid;
+    
+    const moodRef = db.ref('moods/' + userId);
+    moodRef.push({
+      mood: mood,
+      timestamp: new Date().toISOString()
+    }).then(() => {
+      alert('Mood submitted!');
+    });
+  }
+  
+  function sendMessage() {
+    const message = document.getElementById('chat-message-input').value;
+    const chatRef = db.ref('chats/');
+    
+    chatRef.push({
+      message: message,
+      timestamp: new Date().toISOString()
+    }).then(() => {
+      document.getElementById('chat-message-input').value = '';
+    });
+  }
+  
+  db.ref('chats/').on('value', (snapshot) => {
+    const messages = snapshot.val();
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.innerHTML = '';
+    
+    for (let id in messages) {
+      const msg = messages[id].message;
+      chatMessages.innerHTML += `<p>${msg}</p>`;
+    }
+  });
+  
+  function requestNotificationPermission() {
+    messaging.requestPermission()
+      .then(() => messaging.getToken())
+      .then((token) => {
+        console.log('FCM Token:', token);
+        alert('Notifications enabled!');
+      })
+      .catch((error) => {
+        console.error('Error enabling notifications:', error);
+      });
+  }
+  
+  </script>
+</body>
+</html>
