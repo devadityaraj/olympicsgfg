@@ -110,17 +110,23 @@
       });
     }
     
-    function sendMessage() {
-    const message = document.getElementById('chat-message-input').value;
-
-    const chatRef = db.ref('chats/' + message); 
-
+   function sendMessage() {
+  const message = document.getElementById('chat-message-input').value;
+  
+  if (message.trim() !== "") {
+    const chatRef = db.ref('chats').push(); 
+    
     chatRef.set({
-        message: message,
+      message: message,
+      timestamp: new Date().toISOString() 
     }).then(() => {
-        document.getElementById('chat-message-input').value = '';
+      document.getElementById('chat-message-input').value = ''; 
     });
+  } else {
+    alert("Please enter a message before sending.");
+  }
 }
+
     
     db.ref('chats/').on('value', (snapshot) => {
       const messages = snapshot.val();
