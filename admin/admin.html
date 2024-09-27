@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Athlete Monitoring</title>
+    <link rel="stylesheet" href="admin-style.css">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="admin-auth-section">
+        <h1>Admin Dashboard Login</h1>
+        <input type="email" id="admin-email" placeholder="Admin Email">
+        <input type="password" id="admin-password" placeholder="Password">
+        <button onclick="adminLogin()">Login</button>
+    </div>
+
+    <div id="admin-dashboard" style="display: none;">
+        <h1>Welcome, Admin</h1>
+
+        <section id="athletes-mood">
+            <h2>Athletes Mood Data</h2>
+            <table id="mood-table">
+                <thead>
+                    <tr>
+                        <th>Athlete ID</th>
+                        <th>Mood</th>
+                        <th>Timestamp</th>
+                        <th>Contact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="live-chat-monitor">
+            <h2>Live Chat Monitoring</h2>
+            <div id="live-chat-messages"></div>
+        </section>
+
+        <button onclick="adminLogout()">Logout</button>
+        <button onclick="showModal()">Add Athlete</button>
+    </div>
+
+    <div id="athleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Add Athlete</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="signup()">Sign Up</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7RBQbN3VJaMZ3GXShJEzI1Pc2mEWgaLE",
+            authDomain: "athlete-wellness-tracker-c523f.firebaseapp.com",
+            databaseURL: "https://athlete-wellness-tracker-c523f-default-rtdb.firebaseio.com",
+            projectId: "athlete-wellness-tracker-c523f",
+            storageBucket: "athlete-wellness-tracker-c523f.appspot.com",
+            messagingSenderId: "809451496775",
+            appId: "1:809451496775:web:d21695b8bb2ccfd1d51862",
+            measurementId: "G-L3KMQD71W7"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        function adminLogin() {
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    document.getElementById('admin-auth-section').style.display = 'none';
+                    document.getElementById('admin-dashboard').style.display = 'block';
+                    fetchMoodData();
+                    monitorLiveChat(); 
+                })
+                .catch(error => alert(error.message));
+        }
+
+        function adminLogout() {
+            auth.signOut().then(() => {
+                document.getElementById('admin-auth-section').style.display = 'block';
+                document.getElementById('admin-dashboard').style.display = 'none';
+                clearData(); 
+            });
+        }
+
+        function fetchMoodData() {
+            const moodRef = db.ref('moods/');
+            moodRef.on('value', (snapshot) => {
+                const moods = snapshot.val();
+                const moodTableBody = document.querySelector('#mood-table tbody');
+                moodTableBody.innerHTML = ''; 
+
+                if (moods) {
+                    for (let userId in moods) {
+                        const moodData = moods[userId];
+                        const mood = moodData.mood;
+                        const timestamp = moodData.timestamp;
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${userId}</td>
+                            <td>${mood ? mood : 'No mood data'}</td>
+                            <td>${timestamp ? new Date(timestamp).toLocaleString() : 'No timestamp'}</td>
+                            <td><button onclick="contactAthlete('${userId}')">Contact</button></td>
+                        `;
+                        moodTableBody.appendChild(tr);
+                    }
+                }
+            });
+        }
+
+        function contactAthlete(userId) {
+            alert('Contacting Athlete ID: ' + userId);
+        }
+
+        function monitorLiveChat() {
+            const chatRef = db.ref('chats/');
+            chatRef.on('value', (snapshot) => {
+                const messages = snapshot.val();
+                const liveChatMessages = document.getElementById('live-chat-messages');
+                liveChatMessages.innerHTML = ''; 
+
+                if (messages) {
+                    for (let messageId in messages) {
+                        const msgData = messages[messageId];
+                        const p = document.createElement('p');
+                        p.textContent = `[${new Date(msgData.timestamp).toLocaleTimeString()}] ${msgData.message}`;
+                        liveChatMessages.appendChild(p);
+                    }
+                }
+            });
+        }
+
+        function showModal() {
+            document.getElementById('athleteModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('athleteModal').style.display = 'none';
+        }
+
+        function signup() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert('Athlete account created!');
+                    closeModal(); 
+                })
+                .catch(error => alert(error.message));
+        }
+        function clearData() {
+            document.querySelector('#mood-table tbody').innerHTML = '';
+            document.getElementById('live-chat-messages').innerHTML = '';
+        }
+    </script>
+
+</body>
+
+</html>
