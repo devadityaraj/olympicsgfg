@@ -131,31 +131,45 @@
             });
         }
 
-        function fetchMoodData() {
-            const moodRef = db.ref('moods/');
-            moodRef.on('value', (snapshot) => {
-                const moods = snapshot.val();
-                const moodTableBody = document.querySelector('#mood-table tbody');
-                moodTableBody.innerHTML = ''; 
+      // Fetch mood data and update regularly
+function fetchMoodData() {
+    const moodRef = db.ref('moods/');
 
-                if (moods) {
-                    for (let userId in moods) {
-                        const moodData = moods[userId];
-                        const mood = moodData.mood;
-                        const timestamp = moodData.timestamp;
+    // Use child_added event to listen for new moods being added in real-time
+    moodRef.on('child_added', (snapshot) => {
+        const moodData = snapshot.val();
+        const userId = snapshot.key;
+        const mood = moodData.mood;
+        const timestamp = moodData.timestamp;
 
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${userId}</td>
-                            <td>${mood ? mood : 'No mood data'}</td>
-                            <td>${timestamp ? new Date(timestamp).toLocaleString() : 'No timestamp'}</td>
-                            <td><button onclick="contactAthlete('${userId}')">Contact</button></td>
-                        `;
-                        moodTableBody.appendChild(tr);
-                    }
-                }
-            });
-        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${userId}</td>
+            <td>${mood ? mood : 'No mood data'}</td>
+            <td>${timestamp ? new Date(timestamp).toLocaleString() : 'No timestamp'}</td>
+            <td><button onclick="contactAthlete('${userId}')">Contact</button></td>
+        `;
+        document.querySelector('#mood-table tbody').appendChild(tr);
+    });
+
+    // Optional: Listen for changes to existing data using 'child_changed'
+    moodRef.on('child_changed', (snapshot) => {
+        const moodData = snapshot.val();
+        const userId = snapshot.key;
+        const mood = moodData.mood;
+        const timestamp = moodData.timestamp;
+
+        // Find the row by userId and update its content
+        const rows = document.querySelectorAll('#mood-table tbody tr');
+        rows.forEach(row => {
+            if (row.firstChild.textContent === userId) {
+                row.children[1].textContent = mood ? mood : 'No mood data';
+                row.children[2].textContent = timestamp ? new Date(timestamp).toLocaleString() : 'No timestamp';
+            }
+        });
+    });
+}
+
 
         function contactAthlete(userId) {
             alert('Contacting Athlete ID: ' + userId);
