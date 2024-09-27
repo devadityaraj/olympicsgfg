@@ -8,7 +8,6 @@
 </head>
 <body>
 
-  <!-- Authentication Section -->
   <div id="auth-section">
     <h1>Olympics Athlete Mental Health Tracker</h1>
     <input type="email" id="email" placeholder="Email">
@@ -17,13 +16,11 @@
     
   </div>
 
-  <!-- Main App Content -->
   <div id="app-content" style="display: none;">
     <button onclick="logout()">Logout</button>
     
     <h1>Welcome to Athlete Wellness</h1>
     
-    <!-- Mood Check-In Section -->
     <section id="mood-checkin">
       <h2>Mood Check-In</h2>
       <select id="mood-selector">
@@ -37,14 +34,12 @@
       <button onclick="submitMood()">Submit</button>
     </section>
 
-    <!-- Breathing Exercises Section -->
     <section id="breathing-exercises">
       <h2>Breathing Exercises</h2>
       <p>Follow the breathing rhythm</p>
       <div id="breathe-visual"></div>
     </section>
 
-    <!-- Anonymous Chat Section -->
     <section id="anonymous-chat">
       <h2>Anonymous Chat</h2>
       <div id="chat-messages"></div>
@@ -52,7 +47,6 @@
       <button onclick="sendMessage()">Send</button>
     </section>
 
-    <!-- Push Notifications Section -->
     <section id="notifications">
       <h2>Wellness Tips Notifications</h2>
       <button onclick="requestNotificationPermission()">Enable Notifications</button>
@@ -76,7 +70,6 @@
             measurementId: "G-L3KMQD71W7"
         };
     
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -106,9 +99,8 @@
 
     function submitMood() {
       const mood = document.getElementById('mood-selector').value;
-      const username = auth.currentUser.email.split('@')[0]; // Use the part before '@' as the username
+      const username = auth.currentUser.email.split('@')[0]; 
 
-      // Store mood directly under the username
       const moodRef = db.ref('moods/' + username);
       moodRef.set({
         mood: mood,
@@ -121,15 +113,14 @@
     function sendMessage() {
     const message = document.getElementById('chat-message-input').value;
 
-    const chatRef = db.ref('chats/' + message); // Store messages directly under /chats
+    const chatRef = db.ref('chats/' + message); 
 
     chatRef.set({
         message: message,
     }).then(() => {
-        document.getElementById('chat-message-input').value = ''; // Clear input field
+        document.getElementById('chat-message-input').value = '';
     });
 }
-
     
     db.ref('chats/').on('value', (snapshot) => {
       const messages = snapshot.val();
